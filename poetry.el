@@ -692,8 +692,9 @@ compilation buffer name."
       (poetry-ensure-in-project))
     (let* ((env (executable-find "env" t))
            (env-cmd (if env (format "%s -u VIRTUAL_ENV " env) ""))
-           (prog (or (concat env-cmd (executable-find "poetry" t))
-                     (poetry-error "Could not find 'poetry' executable")))
+           (prog (concat env-cmd
+                         (or (executable-find "poetry" t)
+                             (poetry-error "Could not find 'poetry' executable"))))
            (args (if (or (string= command "run")
                          (string= command "config")
                          (string= command "env")
