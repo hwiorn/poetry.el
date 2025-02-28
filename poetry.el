@@ -690,11 +690,9 @@ compilation buffer name."
                                default-directory)))
     (unless (member command '(new init config))
       (poetry-ensure-in-project))
-    (let* ((prog (or (cond ((eq system-type 'gnu/linux)
-                            (concat "env -u VIRTUAL_ENV " (executable-find "poetry" t)))
-                           ((or (eq system-type 'berkeley-unix)
-                                (eq system-type 'darwin))
-                            (executable-find "poetry" t)))
+    (let* ((env (executable-find "env" t))
+           (env-cmd (if env (format "%s -u VIRTUAL_ENV " env) ""))
+           (prog (or (concat env-cmd (executable-find "poetry" t))
                      (poetry-error "Could not find 'poetry' executable")))
            (args (if (or (string= command "run")
                          (string= command "config")
@@ -915,15 +913,17 @@ If OPT is non-nil, set an optional dep."
                        ".venv")
              ;; virtualenvs elsewhere
              (let ((bufname (poetry-call 'env (list "info" "-p") nil nil t)))
-               (with-current-buffer bufname
-                 (when (progn
+               (concat
+                (file-remote-p buffer-file-name)
+                (with-current-buffer bufname
+                  (when (progn
                          (goto-char (point-min))
                          (re-search-forward "\\[RuntimeError\\]" nil t))
                    (poetry-error "Not in a poetry project directory"))
-                 (goto-char (point-min))
-                 (let ((data (buffer-substring-no-properties
-                               (point-min) (point-max))))
-                     (string-trim data)))))
+                  (goto-char (point-min))
+                  (let ((data (buffer-substring-no-properties
+                              (point-min) (point-max))))
+                   (string-trim data))))))
            nil))))
 
 (defun poetry-find-pyproject-file ()
